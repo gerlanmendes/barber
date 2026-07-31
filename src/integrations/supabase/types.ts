@@ -14,7 +14,218 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      appointments: {
+        Row: {
+          barber_id: string
+          client_name: string
+          client_phone: string
+          created_at: string
+          date: string
+          duration_min: number
+          id: string
+          notes: string
+          price_cents: number
+          service_id: string
+          start_time: string
+          status: string
+        }
+        Insert: {
+          barber_id: string
+          client_name: string
+          client_phone: string
+          created_at?: string
+          date: string
+          duration_min: number
+          id?: string
+          notes?: string
+          price_cents?: number
+          service_id: string
+          start_time: string
+          status?: string
+        }
+        Update: {
+          barber_id?: string
+          client_name?: string
+          client_phone?: string
+          created_at?: string
+          date?: string
+          duration_min?: number
+          id?: string
+          notes?: string
+          price_cents?: number
+          service_id?: string
+          start_time?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      barbers: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          name: string
+          photo_url: string | null
+          sort_order: number
+          specialty: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name: string
+          photo_url?: string | null
+          sort_order?: number
+          specialty?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          name?: string
+          photo_url?: string | null
+          sort_order?: number
+          specialty?: string
+        }
+        Relationships: []
+      }
+      blocks: {
+        Row: {
+          barber_id: string | null
+          created_at: string
+          date: string
+          end_time: string
+          id: string
+          reason: string
+          start_time: string
+        }
+        Insert: {
+          barber_id?: string | null
+          created_at?: string
+          date: string
+          end_time: string
+          id?: string
+          reason?: string
+          start_time: string
+        }
+        Update: {
+          barber_id?: string | null
+          created_at?: string
+          date?: string
+          end_time?: string
+          id?: string
+          reason?: string
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocks_barber_id_fkey"
+            columns: ["barber_id"]
+            isOneToOne: false
+            referencedRelation: "barbers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      services: {
+        Row: {
+          active: boolean
+          created_at: string
+          description: string
+          duration_min: number
+          id: string
+          name: string
+          price_cents: number
+          sort_order: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          duration_min?: number
+          id?: string
+          name: string
+          price_cents?: number
+          sort_order?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          description?: string
+          duration_min?: number
+          id?: string
+          name?: string
+          price_cents?: number
+          sort_order?: number
+        }
+        Relationships: []
+      }
+      shop_settings: {
+        Row: {
+          address: string
+          admin_pin: string
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          primary_color: string
+          secondary_color: string
+          singleton: boolean
+          slot_step: number
+          tagline: string
+          updated_at: string
+          whatsapp: string
+          working_hours: Json
+        }
+        Insert: {
+          address?: string
+          admin_pin?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          primary_color?: string
+          secondary_color?: string
+          singleton?: boolean
+          slot_step?: number
+          tagline?: string
+          updated_at?: string
+          whatsapp?: string
+          working_hours?: Json
+        }
+        Update: {
+          address?: string
+          admin_pin?: string
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          primary_color?: string
+          secondary_color?: string
+          singleton?: boolean
+          slot_step?: number
+          tagline?: string
+          updated_at?: string
+          whatsapp?: string
+          working_hours?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
