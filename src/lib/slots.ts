@@ -169,3 +169,23 @@ export function googleCalendarUrl(args: {
 export function whatsappLink(phone: string, message: string): string {
   return `https://wa.me/${onlyDigits(phone)}?text=${encodeURIComponent(message)}`;
 }
+
+export const SHOP_TZ = "America/Sao_Paulo";
+
+/** Current date (ISO) and minutes-of-day in the shop timezone. */
+export function nowInShopTZ(): { dateISO: string; minutes: number } {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: SHOP_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  return {
+    dateISO: `${get("year")}-${get("month")}-${get("day")}`,
+    minutes: Number(get("hour")) * 60 + Number(get("minute")),
+  };
+}
