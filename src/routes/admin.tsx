@@ -445,26 +445,301 @@ function SettingsTab({ pin }: { pin: string }) {
         Salvar configurações
       </button>
 
-      <div className="surface p-4">
-        <h2 className="text-2xl">Serviços e barbeiros</h2>
-        <ul className="mt-2 grid gap-1 text-sm text-muted-foreground">
-          {catalog.data?.services.map((s) => (
-            <li key={s.id}>
-              {s.name} — {s.duration_min} min — {formatPrice(s.price_cents)}
-            </li>
-          ))}
-        </ul>
-        <ul className="mt-3 grid gap-1 text-sm text-muted-foreground">
-          {catalog.data?.barbers.map((b) => (
-            <li key={b.id}>
-              {b.name} — {b.specialty}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <ServicesEditor pin={pin} services={catalog.data?.services ?? []} onSaved={catalog.refetch} />
+      <BarbersEditor pin={pin} barbers={catalog.data?.barbers ?? []} onSaved={catalog.refetch} />
     </section>
   );
 }
+
+type ServiceRow = {
+  id: string;
+  name: string;
+  description: string;
+  duration_min: number;
+  price_cents: number;
+  active: boolean;
+};
+
+function ServicesEditor({
+  pin,
+  services,
+  onSaved,
+}: {
+  pin: string;
+  services: ServiceRow[];
+  onSaved: () => void;
+}) {
+  const saveFn = useServerFn(saveService);
+  const [draft, setDraft] = useState<Record<string, ServiceRow>>({});
+  const [novo, setNovo] = useState(false);
+
+  const save = useMutation({
+    mutationFn: (row: ServiceRow & { id: string | null }) =>
+      saveFn({
+        data: {
+          pin,
+          id: row.id,
+          name: row.name,
+          description: row.description ?? "",
+          duration_min: Number(row.duration_min),
+          price_cents: Number(row.price_cents),
+          active: row.active,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Serviço salvo.");
+      setDraft({});
+      setNovo(false);
+      onSaved();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const rowOf = (s: ServiceRow) => draft[s.id] ?? s;
+
+  return (
+    <div className="surface grid gap-3 p-4">
+      <h2 className="text-2xl">Serviços</h2>
+      {services.map((s) => {
+        const r = rowOf(s);
+        return (
+          <div key={s.id} className="grid gap-2 rounded-lg border border-input p-3">
+            <Field
+              label="Nome"
+              value={r.name}
+              onChange={(v) => setDraft({ ...draft, [s.id]: { ...r, name: v } })}
+            />
+            <div className="grid grid-cols-2 gap-3">
+              <NumberField
+                label="Duração (min)"
+                value={r.duration_min}
+                onChange={(v) => setDraft({ ...draft, [s.id]: { ...r, duration_min: v } })}
+              />
+              <NumberField
+                label="Preço (R$)"
+                step="0.01"
+                value={r.price_cents / 100}
+                onChange={(v) =>
+                  setDraft({ ...draft, [s.id]: { ...r, price_cents: Math.round(v * 100) } })
+                }
+              />
+            </div>
+            <div className="flex items-center justify-between gap-3">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={r.active}
+                  onChange={(e) => setDraft({ ...draft, [s.id]: { ...r, active: e.target.checked } })}
+                />
+                Ativo
+              </label>
+              <button
+                type="button"
+                onClick={() => save.mutate({ ...r, id: s.id })}
+                disabled={save.isPending}
+                className="btn-base btn-primary h-10 px-4"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        );
+      })}
+
+      {novo ? (
+        <NewServiceForm
+          onCancel={() => setNovo(false)}
+          onSave={(row) => save.mutate({ ...row, id: null })}
+          pending={save.isPending}
+        />
+      ) : (
+        <button type="button" onClick={() => setNovo(true)} className="btn-base btn-ghost h-11">
+          + Novo serviço
+        </button>
+      )}
+    </div>
+  );
+}
+
+function NewServiceForm({
+  onCancel,
+  onSave,
+  pending,
+}: {
+  onCancel: () => void;
+  onSave: (row: ServiceRow) => void;
+  pending: boolean;
+}) {
+  const [row, setRow] = useState<ServiceRow>({
+    id: "",
+    name: "",
+    description: "",
+    duration_min: 30,
+    price_cents: 5000,
+    active: true,
+  });
+  return (
+    <div className="grid gap-2 rounded-lg border border-primary/40 p-3">
+      <Field label="Nome" value={row.name} onChange={(v) => setRow({ ...row, name: v })} />
+      <div className="grid grid-cols-2 gap-3">
+        <NumberField
+          label="Duração (min)"
+          value={row.duration_min}
+          onChange={(v) => setRow({ ...row, duration_min: v })}
+        />
+        <NumberField
+          label="Preço (R$)"
+          step="0.01"
+          value={row.price_cents / 100}
+          onChange={(v) => setRow({ ...row, price_cents: Math.round(v * 100) })}
+        />
+      </div>
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => onSave(row)}
+          disabled={pending || !row.name.trim()}
+          className="btn-base btn-primary h-10 flex-1"
+        >
+          Criar
+        </button>
+        <button type="button" onClick={onCancel} className="btn-base btn-ghost h-10 px-4">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+type BarberRow = {
+  id: string;
+  name: string;
+  specialty: string;
+  photo_url: string | null;
+  active: boolean;
+};
+
+function BarbersEditor({
+  pin,
+  barbers,
+  onSaved,
+}: {
+  pin: string;
+  barbers: BarberRow[];
+  onSaved: () => void;
+}) {
+  const saveFn = useServerFn(saveBarber);
+  const [draft, setDraft] = useState<Record<string, BarberRow>>({});
+  const [novo, setNovo] = useState<BarberRow | null>(null);
+
+  const save = useMutation({
+    mutationFn: (row: BarberRow & { id: string | null }) =>
+      saveFn({
+        data: {
+          pin,
+          id: row.id,
+          name: row.name,
+          specialty: row.specialty ?? "",
+          photo_url: row.photo_url,
+          active: row.active,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("Barbeiro salvo.");
+      setDraft({});
+      setNovo(null);
+      onSaved();
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const render = (r: BarberRow, onChange: (row: BarberRow) => void, id: string | null) => (
+    <div className="grid gap-2 rounded-lg border border-input p-3">
+      <Field label="Nome" value={r.name} onChange={(v) => onChange({ ...r, name: v })} />
+      <Field
+        label="Especialidade"
+        value={r.specialty}
+        onChange={(v) => onChange({ ...r, specialty: v })}
+      />
+      <Field
+        label="URL da foto"
+        value={r.photo_url ?? ""}
+        onChange={(v) => onChange({ ...r, photo_url: v || null })}
+      />
+      <div className="flex items-center justify-between gap-3">
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={r.active}
+            onChange={(e) => onChange({ ...r, active: e.target.checked })}
+          />
+          Ativo
+        </label>
+        <button
+          type="button"
+          onClick={() => save.mutate({ ...r, id })}
+          disabled={save.isPending || !r.name.trim()}
+          className="btn-base btn-primary h-10 px-4"
+        >
+          Salvar
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="surface grid gap-3 p-4">
+      <h2 className="text-2xl">Barbeiros</h2>
+      {barbers.map((b) => {
+        const r = draft[b.id] ?? b;
+        return (
+          <div key={b.id}>
+            {render(r, (row) => setDraft({ ...draft, [b.id]: row }), b.id)}
+          </div>
+        );
+      })}
+      {novo ? (
+        render(novo, setNovo, null)
+      ) : (
+        <button
+          type="button"
+          onClick={() =>
+            setNovo({ id: "", name: "", specialty: "", photo_url: null, active: true })
+          }
+          className="btn-base btn-ghost h-11"
+        >
+          + Novo barbeiro
+        </button>
+      )}
+    </div>
+  );
+}
+
+function NumberField({
+  label,
+  value,
+  onChange,
+  step,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  step?: string;
+}) {
+  return (
+    <label className="text-sm">
+      {label}
+      <input
+        type="number"
+        step={step ?? "1"}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="mt-1 h-11 w-full rounded-lg border border-input bg-background px-3 outline-none focus:border-primary"
+      />
+    </label>
+  );
+}
+
 
 function Field({
   label,
