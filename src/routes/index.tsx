@@ -86,19 +86,26 @@ function BookingPage() {
 
   const book = useServerFn(createAppointment);
   const mutation = useMutation({
-    mutationFn: book,
+    mutationFn: (input: {
+      date: string;
+      time: string;
+      serviceId: string;
+      barberId: string | null;
+      clientName: string;
+      clientPhone: string;
+    }) => book({ data: input }),
     onSuccess: (result, vars) => {
       setConfirmed({
         barberName: result.barberName,
         serviceName: service?.name ?? "",
-        date: vars.data.date,
-        time: vars.data.time,
+        date: vars.date,
+        time: vars.time,
         durationMin: service?.duration_min ?? 30,
         priceCents: service?.price_cents ?? 0,
       });
       if (typeof window !== "undefined") {
-        localStorage.setItem("cliente_telefone", onlyDigits(vars.data.clientPhone));
-        localStorage.setItem("cliente_nome", vars.data.clientName);
+        localStorage.setItem("cliente_telefone", onlyDigits(vars.clientPhone));
+        localStorage.setItem("cliente_nome", vars.clientName);
       }
     },
     onError: (error: Error) => {
@@ -362,14 +369,12 @@ function BookingPage() {
                     return;
                   }
                   mutation.mutate({
-                    data: {
-                      date,
-                      time,
-                      serviceId: serviceId!,
-                      barberId,
-                      clientName: name.trim(),
-                      clientPhone: onlyDigits(phone),
-                    },
+                    date,
+                    time,
+                    serviceId: serviceId!,
+                    barberId,
+                    clientName: name.trim(),
+                    clientPhone: onlyDigits(phone),
                   });
                 }}
               >
