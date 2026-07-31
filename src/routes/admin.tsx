@@ -11,6 +11,8 @@ import {
   getCatalog,
   getClients,
   saveBlock,
+  saveService,
+  saveBarber,
   deleteBlock,
   setAppointmentStatus,
   updateShop,
@@ -474,7 +476,7 @@ function ServicesEditor({
   const [novo, setNovo] = useState(false);
 
   const save = useMutation({
-    mutationFn: (row: ServiceRow & { id: string | null }) =>
+    mutationFn: (row: Omit<ServiceRow, "id"> & { id: string | null }) =>
       saveFn({
         data: {
           pin,
@@ -633,7 +635,7 @@ function BarbersEditor({
   const [novo, setNovo] = useState<BarberRow | null>(null);
 
   const save = useMutation({
-    mutationFn: (row: BarberRow & { id: string | null }) =>
+    mutationFn: (row: Omit<BarberRow, "id"> & { id: string | null }) =>
       saveFn({
         data: {
           pin,
