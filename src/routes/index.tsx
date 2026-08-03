@@ -6,6 +6,7 @@ import { CalendarPlus, CheckCircle2, ChevronLeft, Clock, MessageCircle, Scissors
 import { toast } from "sonner";
 
 import { ShopTheme } from "@/components/ShopTheme";
+import { ShopLogo } from "@/components/ShopLogo";
 import { getShopData, getAvailability, createAppointment } from "@/lib/booking.functions";
 import {
   formatDateISO,
