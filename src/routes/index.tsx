@@ -6,6 +6,7 @@ import { CalendarPlus, CheckCircle2, ChevronLeft, Clock, MessageCircle, Scissors
 import { toast } from "sonner";
 
 import { ShopTheme } from "@/components/ShopTheme";
+import { ShopLogo } from "@/components/ShopLogo";
 import { getShopData, getAvailability, createAppointment } from "@/lib/booking.functions";
 import {
   formatDateISO,
@@ -173,19 +174,7 @@ function BookingPage() {
       <ShopTheme shop={shop} />
       <main className="mx-auto w-full max-w-lg px-5 pb-28 pt-8">
         <header className="flex items-center gap-3">
-          {shop.logo_url ? (
-            <img
-              src={shop.logo_url}
-              alt={`Logo ${shop.name}`}
-              width={48}
-              height={48}
-              className="h-12 w-12 rounded-full object-cover"
-            />
-          ) : (
-            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <Scissors className="h-6 w-6" />
-            </span>
-          )}
+          <ShopLogo url={shop.logo_url} name={shop.name} size={48} />
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-3xl leading-none">{shop.name}</h1>
             <p className="truncate text-sm text-muted-foreground">{shop.tagline}</p>
