@@ -348,9 +348,19 @@ function SettingsTab({ pin }: { pin: string }) {
   const saveFn = useServerFn(updateShop);
   const save = useMutation({
     mutationFn: (values: ShopForm) => saveFn({ data: { pin, ...values } }),
-    onSuccess: () => toast.success("Configurações salvas. Recarregue para ver as cores."),
+    onSuccess: async (_res, values) => {
+      // Aplica as cores imediatamente, sem precisar recarregar a página.
+      if (typeof document !== "undefined") {
+        document.documentElement.style.setProperty("--primary", values.primary_color);
+        document.documentElement.style.setProperty("--ring", values.primary_color);
+        document.documentElement.style.setProperty("--brand-secondary", values.secondary_color);
+      }
+      await catalog.refetch();
+      toast.success("Configurações salvas.");
+    },
     onError: (e: Error) => toast.error(e.message),
   });
+
 
   if (!form) return <p className="mt-6 text-sm text-muted-foreground">Carregando...</p>;
 
