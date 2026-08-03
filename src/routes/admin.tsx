@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
+import { ShopLogo } from "@/components/ShopLogo";
 
 import {
   adminLogin,
