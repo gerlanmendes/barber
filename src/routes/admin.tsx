@@ -376,8 +376,15 @@ function SettingsTab({ pin }: { pin: string }) {
         <Field
           label="URL do logo"
           value={form.logo_url ?? ""}
-          onChange={(v) => set("logo_url", v || null)}
+          onChange={(v) => set("logo_url", v.trim() || null)}
         />
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <ShopLogo url={form.logo_url} name={form.name} size={48} />
+          <span>
+            Prévia do logo. Use um link direto de imagem (.png/.jpg/.svg, https). Se
+            aparecer a tesoura, o link não é uma imagem válida.
+          </span>
+        </div>
         <div className="grid grid-cols-2 gap-3">
           <label className="text-sm">
             Cor primária
