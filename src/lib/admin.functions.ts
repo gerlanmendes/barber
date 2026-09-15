@@ -276,6 +276,36 @@ export const saveBarber = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Zera a barbearia para reconfigurar (usado ao entregar o sistema para outro cliente). */
+export const resetShop = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        pin: z.string().min(1).max(20),
+        confirm: z.literal("ZERAR"),
+        keepAppointments: z.boolean().default(false),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }): Promise<{ ok: true }> => {
+    const { assertPin, supabaseAdmin } = await import("./admin.server");
+    await assertPin(data.pin);
+
+    if (!data.keepAppointments) {
+      await supabaseAdmin.from("appointments").delete().not("id", "is", null);
+      await supabaseAdmin.from("blocks").delete().not("id", "is", null);
+      await supabaseAdmin.from("services").delete().not("id", "is", null);
+      await supabaseAdmin.from("barbers").delete().not("id", "is", null);
+    }
+
+    const { error } = await supabaseAdmin
+      .from("shop_settings")
+      .update({ setup_done: false, updated_at: new Date().toISOString() })
+      .eq("singleton", true);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const getCatalog = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ pin: z.string().min(1).max(20) }).parse(data))
   .handler(async ({ data }) => {
