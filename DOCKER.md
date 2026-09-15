@@ -52,3 +52,21 @@ O build usa `NITRO_PRESET=node-server`, gerando um servidor Node em
 Cada barbearia = um container + um banco próprio (troque as variáveis
 `SUPABASE_*`). O nome, cores, logo, serviços e barbeiros são editados em
 `/admin` com o PIN.
+
+## 4. Banco de dados próprio (self-hosting)
+
+O app conversa com o banco pela chave de serviço (`SUPABASE_SERVICE_ROLE_KEY`).
+No projeto criado pela Lovable essa chave não fica acessível para cópia —
+para rodar via Docker, crie um projeto **gratuito** em supabase.com:
+
+1. Crie o projeto e copie em *Settings → API*: a URL, a `anon key` (publicável)
+   e a `service_role key` (secreta — só no servidor).
+2. Abra o *SQL Editor* do projeto e rode o arquivo `supabase/schema.sql`
+   (ele cria as tabelas e a linha inicial de configuração).
+3. Preencha o `.env` com as chaves desse projeto (não as da Lovable).
+4. `docker compose up --build` → `http://localhost:3000` e configure tudo em
+   `/admin` (PIN padrão `1234`).
+
+Os dados da barbearia (nome, cores, serviços, agendamentos) ficam no banco —
+para migrar o que já existe aqui, copie os dados manualmente ou recomece do
+zero pelo painel.
