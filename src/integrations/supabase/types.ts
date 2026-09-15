@@ -185,6 +185,7 @@ export type Database = {
           name: string
           primary_color: string
           secondary_color: string
+          setup_done: boolean
           singleton: boolean
           slot_step: number
           tagline: string
@@ -201,6 +202,7 @@ export type Database = {
           name?: string
           primary_color?: string
           secondary_color?: string
+          setup_done?: boolean
           singleton?: boolean
           slot_step?: number
           tagline?: string
@@ -217,6 +219,7 @@ export type Database = {
           name?: string
           primary_color?: string
           secondary_color?: string
+          setup_done?: boolean
           singleton?: boolean
           slot_step?: number
           tagline?: string
