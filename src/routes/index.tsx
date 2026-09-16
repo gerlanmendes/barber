@@ -175,6 +175,16 @@ function BookingPage() {
     <>
       <ShopTheme shop={shop} />
       <main className="mx-auto w-full max-w-lg px-5 pb-28 pt-8">
+        {shop.setup_done === false && (
+          <a
+            href="/instalar"
+            className="mb-5 block rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm"
+          >
+            <strong>Esta barbearia ainda não foi configurada.</strong>
+            <br />
+            Toque aqui para colocar o nome, horários, serviços e barbeiros em 2 minutos.
+          </a>
+        )}
         <header className="flex items-center gap-3">
           <ShopLogo url={shop.logo_url} name={shop.name} size={48} />
           <div className="min-w-0 flex-1">

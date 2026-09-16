@@ -61,6 +61,7 @@ export const getShopData = createServerFn({ method: "GET" }).handler(async (): P
       address: "",
       working_hours: {},
       slot_step: 15,
+      setup_done: false,
     }) as unknown as Shop,
     barbers: (barbers.data ?? []) as Barber[],
     services: (services.data ?? []) as Service[],
