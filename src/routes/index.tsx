@@ -24,17 +24,19 @@ const shopQuery = queryOptions({ queryKey: ["shop"], queryFn: () => getShopData(
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Agende seu corte | Barbearia Navalha" },
+      { title: "Agende seu corte online | Barbearia" },
       {
         name: "description",
         content:
           "Agende corte e barba em 3 passos: escolha o serviço, o barbeiro e o horário. Rápido, sem cadastro e direto do celular.",
       },
-      { property: "og:title", content: "Agende seu corte | Barbearia Navalha" },
+      { property: "og:title", content: "Agende seu corte online" },
       {
         property: "og:description",
-        content: "Agendamento online da Barbearia Navalha em 3 passos, direto do celular.",
+        content: "Agendamento online da barbearia em 3 passos, direto do celular.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   loader: ({ context }) => {
