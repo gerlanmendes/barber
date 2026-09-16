@@ -16,6 +16,7 @@ create table public.shop_settings (
   working_hours jsonb not null default '{}'::jsonb,
   slot_step integer not null default 15,
   admin_pin text not null default '1234',
+  setup_done boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

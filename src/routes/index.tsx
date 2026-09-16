@@ -24,17 +24,19 @@ const shopQuery = queryOptions({ queryKey: ["shop"], queryFn: () => getShopData(
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Agende seu corte | Barbearia Navalha" },
+      { title: "Agende seu corte online | Barbearia" },
       {
         name: "description",
         content:
           "Agende corte e barba em 3 passos: escolha o serviço, o barbeiro e o horário. Rápido, sem cadastro e direto do celular.",
       },
-      { property: "og:title", content: "Agende seu corte | Barbearia Navalha" },
+      { property: "og:title", content: "Agende seu corte online" },
       {
         property: "og:description",
-        content: "Agendamento online da Barbearia Navalha em 3 passos, direto do celular.",
+        content: "Agendamento online da barbearia em 3 passos, direto do celular.",
       },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   loader: ({ context }) => {
@@ -173,6 +175,16 @@ function BookingPage() {
     <>
       <ShopTheme shop={shop} />
       <main className="mx-auto w-full max-w-lg px-5 pb-28 pt-8">
+        {shop.setup_done === false && (
+          <a
+            href="/instalar"
+            className="mb-5 block rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm"
+          >
+            <strong>Esta barbearia ainda não foi configurada.</strong>
+            <br />
+            Toque aqui para colocar o nome, horários, serviços e barbeiros em 2 minutos.
+          </a>
+        )}
         <header className="flex items-center gap-3">
           <ShopLogo url={shop.logo_url} name={shop.name} size={48} />
           <div className="min-w-0 flex-1">
