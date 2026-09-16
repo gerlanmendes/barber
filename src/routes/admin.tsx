@@ -467,7 +467,46 @@ function SettingsTab({ pin }: { pin: string }) {
 
       <ServicesEditor pin={pin} services={catalog.data?.services ?? []} onSaved={catalog.refetch} />
       <BarbersEditor pin={pin} barbers={catalog.data?.barbers ?? []} onSaved={catalog.refetch} />
+      <ResetSection pin={pin} />
     </section>
+  );
+}
+
+function ResetSection({ pin }: { pin: string }) {
+  const [confirm, setConfirm] = useState("");
+  const resetFn = useServerFn(resetShop);
+
+  const reset = useMutation({
+    mutationFn: () => resetFn({ data: { pin, confirm: "ZERAR", keepAppointments: false } }),
+    onSuccess: () => {
+      toast.success("Sistema zerado. Abrindo o assistente de configuração...");
+      if (typeof window !== "undefined") window.location.href = "/instalar";
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  return (
+    <div className="mt-10 rounded-xl border border-destructive/40 p-4">
+      <h3 className="text-lg font-semibold">Entregar para outra barbearia</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Apaga serviços, barbeiros, bloqueios e agendamentos e abre o assistente de configuração do
+        zero. Use quando for instalar este sistema para outro cliente. Não tem como desfazer.
+      </p>
+      <input
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value.toUpperCase())}
+        placeholder="Escreva ZERAR para liberar"
+        className="mt-3 h-11 w-full rounded-lg border border-input bg-background px-3"
+      />
+      <button
+        type="button"
+        disabled={confirm !== "ZERAR" || reset.isPending}
+        onClick={() => reset.mutate()}
+        className="btn-base mt-3 h-11 w-full bg-destructive text-destructive-foreground disabled:opacity-40"
+      >
+        {reset.isPending ? "Zerando..." : "Zerar e reconfigurar"}
+      </button>
+    </div>
   );
 }
 
