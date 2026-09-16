@@ -32,7 +32,7 @@ export const getShopData = createServerFn({ method: "GET" }).handler(async (): P
     supabaseAdmin
       .from("shop_settings")
       .select(
-        "name, tagline, logo_url, primary_color, secondary_color, whatsapp, address, working_hours, slot_step",
+        "name, tagline, logo_url, primary_color, secondary_color, whatsapp, address, working_hours, slot_step, setup_done",
       )
       .limit(1)
       .maybeSingle(),
