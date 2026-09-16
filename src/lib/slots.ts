@@ -28,6 +28,7 @@ export type Shop = {
   address: string;
   working_hours: WorkingHours;
   slot_step: number;
+  setup_done?: boolean;
 };
 
 export type Slot = { time: string; barberIds: string[] };
