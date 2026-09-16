@@ -26,6 +26,7 @@ export type Database = {
           notes: string
           price_cents: number
           service_id: string
+          shop_id: string
           start_time: string
           status: string
         }
@@ -40,6 +41,7 @@ export type Database = {
           notes?: string
           price_cents?: number
           service_id: string
+          shop_id: string
           start_time: string
           status?: string
         }
@@ -54,6 +56,7 @@ export type Database = {
           notes?: string
           price_cents?: number
           service_id?: string
+          shop_id?: string
           start_time?: string
           status?: string
         }
@@ -72,6 +75,13 @@ export type Database = {
             referencedRelation: "services"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "appointments_shop_fk"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shop_settings"
+            referencedColumns: ["id"]
+          },
         ]
       }
       barbers: {
@@ -81,6 +91,7 @@ export type Database = {
           id: string
           name: string
           photo_url: string | null
+          shop_id: string
           sort_order: number
           specialty: string
         }
@@ -90,6 +101,7 @@ export type Database = {
           id?: string
           name: string
           photo_url?: string | null
+          shop_id: string
           sort_order?: number
           specialty?: string
         }
@@ -99,10 +111,19 @@ export type Database = {
           id?: string
           name?: string
           photo_url?: string | null
+          shop_id?: string
           sort_order?: number
           specialty?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "barbers_shop_fk"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shop_settings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blocks: {
         Row: {
@@ -112,6 +133,7 @@ export type Database = {
           end_time: string
           id: string
           reason: string
+          shop_id: string
           start_time: string
         }
         Insert: {
@@ -121,6 +143,7 @@ export type Database = {
           end_time: string
           id?: string
           reason?: string
+          shop_id: string
           start_time: string
         }
         Update: {
@@ -130,6 +153,7 @@ export type Database = {
           end_time?: string
           id?: string
           reason?: string
+          shop_id?: string
           start_time?: string
         }
         Relationships: [
@@ -140,7 +164,41 @@ export type Database = {
             referencedRelation: "barbers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "blocks_shop_fk"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shop_settings"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      platform_settings: {
+        Row: {
+          brand_name: string
+          created_at: string
+          id: string
+          owner_pin: string
+          tagline: string
+          updated_at: string
+        }
+        Insert: {
+          brand_name?: string
+          created_at?: string
+          id?: string
+          owner_pin?: string
+          tagline?: string
+          updated_at?: string
+        }
+        Update: {
+          brand_name?: string
+          created_at?: string
+          id?: string
+          owner_pin?: string
+          tagline?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       services: {
         Row: {
@@ -151,6 +209,7 @@ export type Database = {
           id: string
           name: string
           price_cents: number
+          shop_id: string
           sort_order: number
         }
         Insert: {
@@ -161,6 +220,7 @@ export type Database = {
           id?: string
           name: string
           price_cents?: number
+          shop_id: string
           sort_order?: number
         }
         Update: {
@@ -171,9 +231,18 @@ export type Database = {
           id?: string
           name?: string
           price_cents?: number
+          shop_id?: string
           sort_order?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "services_shop_fk"
+            columns: ["shop_id"]
+            isOneToOne: false
+            referencedRelation: "shop_settings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       shop_settings: {
         Row: {
@@ -188,6 +257,7 @@ export type Database = {
           setup_done: boolean
           singleton: boolean
           slot_step: number
+          slug: string
           tagline: string
           updated_at: string
           whatsapp: string
@@ -205,6 +275,7 @@ export type Database = {
           setup_done?: boolean
           singleton?: boolean
           slot_step?: number
+          slug: string
           tagline?: string
           updated_at?: string
           whatsapp?: string
@@ -222,6 +293,7 @@ export type Database = {
           setup_done?: boolean
           singleton?: boolean
           slot_step?: number
+          slug?: string
           tagline?: string
           updated_at?: string
           whatsapp?: string
