@@ -94,6 +94,14 @@ function SetupPage() {
     onError: (e: Error) => toast.error(e.message || "Não foi possível salvar."),
   });
 
+  if (state.isPending && !done) {
+    return (
+      <Shell>
+        <p className="text-muted-foreground">Carregando...</p>
+      </Shell>
+    );
+  }
+
   if (state.data?.setupDone && !done) {
     return (
       <Shell>
