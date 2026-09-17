@@ -33,24 +33,25 @@ export type AdminClient = {
   last_service: string;
 };
 
+const slug = z.string().trim().min(1).max(40);
+const pin = z.string().min(1).max(20);
+
 export const adminLogin = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ pin: z.string().min(1).max(20) }).parse(data))
+  .inputValidator((data: unknown) => z.object({ slug, pin }).parse(data))
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { assertPin } = await import("./admin.server");
-    await assertPin(data.pin);
+    await assertPin(data.slug, data.pin);
     return { ok: true };
   });
 
 export const getAgenda = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
-    z
-      .object({ pin: z.string().min(1).max(20), date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) })
-      .parse(data),
+    z.object({ slug, pin, date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).parse(data),
   )
   .handler(
     async ({ data }): Promise<{ appointments: AdminAppointment[]; blocks: AdminBlock[] }> => {
       const { assertPin, supabaseAdmin } = await import("./admin.server");
-      await assertPin(data.pin);
+      const shopId = await assertPin(data.slug, data.pin);
 
       const [appointments, blocks] = await Promise.all([
         supabaseAdmin
@@ -58,11 +59,13 @@ export const getAgenda = createServerFn({ method: "POST" })
           .select(
             "id, date, start_time, duration_min, price_cents, status, client_name, client_phone, notes, barber_id, barbers(name), services(name)",
           )
+          .eq("shop_id", shopId)
           .eq("date", data.date)
           .order("start_time"),
         supabaseAdmin
           .from("blocks")
           .select("id, barber_id, date, start_time, end_time, reason")
+          .eq("shop_id", shopId)
           .eq("date", data.date)
           .order("start_time"),
       ]);
@@ -103,7 +106,8 @@ export const setAppointmentStatus = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        pin: z.string().min(1).max(20),
+        slug,
+        pin,
         id: z.string().uuid(),
         status: z.enum(["confirmado", "concluido", "cancelado"]),
       })
@@ -111,11 +115,12 @@ export const setAppointmentStatus = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { assertPin, supabaseAdmin } = await import("./admin.server");
-    await assertPin(data.pin);
+    const shopId = await assertPin(data.slug, data.pin);
     const { error } = await supabaseAdmin
       .from("appointments")
       .update({ status: data.status })
-      .eq("id", data.id);
+      .eq("id", data.id)
+      .eq("shop_id", shopId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -124,7 +129,8 @@ export const saveBlock = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        pin: z.string().min(1).max(20),
+        slug,
+        pin,
         barberId: z.string().uuid().nullable(),
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         start: z.string().regex(/^\d{2}:\d{2}$/),
@@ -135,8 +141,9 @@ export const saveBlock = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { assertPin, supabaseAdmin } = await import("./admin.server");
-    await assertPin(data.pin);
+    const shopId = await assertPin(data.slug, data.pin);
     const { error } = await supabaseAdmin.from("blocks").insert({
+      shop_id: shopId,
       barber_id: data.barberId,
       date: data.date,
       start_time: data.start,
@@ -148,26 +155,29 @@ export const saveBlock = createServerFn({ method: "POST" })
   });
 
 export const deleteBlock = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
-    z.object({ pin: z.string().min(1).max(20), id: z.string().uuid() }).parse(data),
-  )
+  .inputValidator((data: unknown) => z.object({ slug, pin, id: z.string().uuid() }).parse(data))
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { assertPin, supabaseAdmin } = await import("./admin.server");
-    await assertPin(data.pin);
-    const { error } = await supabaseAdmin.from("blocks").delete().eq("id", data.id);
+    const shopId = await assertPin(data.slug, data.pin);
+    const { error } = await supabaseAdmin
+      .from("blocks")
+      .delete()
+      .eq("id", data.id)
+      .eq("shop_id", shopId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const getClients = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ pin: z.string().min(1).max(20) }).parse(data))
+  .inputValidator((data: unknown) => z.object({ slug, pin }).parse(data))
   .handler(async ({ data }): Promise<AdminClient[]> => {
     const { assertPin, supabaseAdmin } = await import("./admin.server");
-    await assertPin(data.pin);
+    const shopId = await assertPin(data.slug, data.pin);
 
     const { data: rows, error } = await supabaseAdmin
       .from("appointments")
       .select("client_name, client_phone, date, services(name)")
+      .eq("shop_id", shopId)
       .order("date", { ascending: false })
       .limit(500);
     if (error) throw new Error(error.message);
@@ -200,7 +210,8 @@ export const updateShop = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        pin: z.string().min(1).max(20),
+        slug,
+        pin,
         name: z.string().trim().min(1).max(60),
         tagline: z.string().trim().max(120),
         logo_url: z.string().trim().max(400).nullable(),
@@ -217,12 +228,12 @@ export const updateShop = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { assertPin, supabaseAdmin } = await import("./admin.server");
-    await assertPin(data.pin);
-    const { pin: _pin, ...values } = data;
+    const shopId = await assertPin(data.slug, data.pin);
+    const { pin: _pin, slug: _slug, ...values } = data;
     const { error } = await supabaseAdmin
       .from("shop_settings")
       .update({ ...values, updated_at: new Date().toISOString() })
-      .eq("singleton", true);
+      .eq("id", shopId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -231,7 +242,8 @@ export const saveService = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        pin: z.string().min(1).max(20),
+        slug,
+        pin,
         id: z.string().uuid().nullable(),
         name: z.string().trim().min(1).max(60),
         description: z.string().trim().max(160).default(""),
@@ -243,11 +255,11 @@ export const saveService = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { assertPin, supabaseAdmin } = await import("./admin.server");
-    await assertPin(data.pin);
-    const { pin: _pin, id, ...values } = data;
+    const shopId = await assertPin(data.slug, data.pin);
+    const { pin: _pin, slug: _slug, id, ...values } = data;
     const { error } = id
-      ? await supabaseAdmin.from("services").update(values).eq("id", id)
-      : await supabaseAdmin.from("services").insert(values);
+      ? await supabaseAdmin.from("services").update(values).eq("id", id).eq("shop_id", shopId)
+      : await supabaseAdmin.from("services").insert({ ...values, shop_id: shopId });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -256,7 +268,8 @@ export const saveBarber = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        pin: z.string().min(1).max(20),
+        slug,
+        pin,
         id: z.string().uuid().nullable(),
         name: z.string().trim().min(1).max(60),
         specialty: z.string().trim().max(80).default(""),
@@ -267,21 +280,22 @@ export const saveBarber = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { assertPin, supabaseAdmin } = await import("./admin.server");
-    await assertPin(data.pin);
-    const { pin: _pin, id, ...values } = data;
+    const shopId = await assertPin(data.slug, data.pin);
+    const { pin: _pin, slug: _slug, id, ...values } = data;
     const { error } = id
-      ? await supabaseAdmin.from("barbers").update(values).eq("id", id)
-      : await supabaseAdmin.from("barbers").insert(values);
+      ? await supabaseAdmin.from("barbers").update(values).eq("id", id).eq("shop_id", shopId)
+      : await supabaseAdmin.from("barbers").insert({ ...values, shop_id: shopId });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
-/** Zera a barbearia para reconfigurar (usado ao entregar o sistema para outro cliente). */
+/** Zera apenas ESTA barbearia (não afeta as outras da plataforma). */
 export const resetShop = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        pin: z.string().min(1).max(20),
+        slug,
+        pin,
         confirm: z.literal("ZERAR"),
         keepAppointments: z.boolean().default(false),
       })
@@ -289,32 +303,32 @@ export const resetShop = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { assertPin, supabaseAdmin } = await import("./admin.server");
-    await assertPin(data.pin);
+    const shopId = await assertPin(data.slug, data.pin);
 
     if (!data.keepAppointments) {
-      await supabaseAdmin.from("appointments").delete().not("id", "is", null);
-      await supabaseAdmin.from("blocks").delete().not("id", "is", null);
-      await supabaseAdmin.from("services").delete().not("id", "is", null);
-      await supabaseAdmin.from("barbers").delete().not("id", "is", null);
+      await supabaseAdmin.from("appointments").delete().eq("shop_id", shopId);
+      await supabaseAdmin.from("blocks").delete().eq("shop_id", shopId);
+      await supabaseAdmin.from("services").delete().eq("shop_id", shopId);
+      await supabaseAdmin.from("barbers").delete().eq("shop_id", shopId);
     }
 
     const { error } = await supabaseAdmin
       .from("shop_settings")
       .update({ setup_done: false, updated_at: new Date().toISOString() })
-      .eq("singleton", true);
+      .eq("id", shopId);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const getCatalog = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ pin: z.string().min(1).max(20) }).parse(data))
+  .inputValidator((data: unknown) => z.object({ slug, pin }).parse(data))
   .handler(async ({ data }) => {
     const { assertPin, supabaseAdmin } = await import("./admin.server");
-    await assertPin(data.pin);
+    const shopId = await assertPin(data.slug, data.pin);
     const [settings, barbers, services] = await Promise.all([
-      supabaseAdmin.from("shop_settings").select("*").limit(1).maybeSingle(),
-      supabaseAdmin.from("barbers").select("*").order("sort_order"),
-      supabaseAdmin.from("services").select("*").order("sort_order"),
+      supabaseAdmin.from("shop_settings").select("*").eq("id", shopId).maybeSingle(),
+      supabaseAdmin.from("barbers").select("*").eq("shop_id", shopId).order("sort_order"),
+      supabaseAdmin.from("services").select("*").eq("shop_id", shopId).order("sort_order"),
     ]);
     return {
       settings: settings.data,

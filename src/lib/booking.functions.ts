@@ -25,53 +25,52 @@ export type ClientAppointment = {
   service_name: string;
 };
 
-export const getShopData = createServerFn({ method: "GET" }).handler(async (): Promise<ShopData> => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+const slugInput = z.string().trim().min(1).max(40);
 
-  const [settings, barbers, services] = await Promise.all([
-    supabaseAdmin
+export const getShopData = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ slug: slugInput }).parse(data))
+  .handler(async ({ data }): Promise<ShopData | null> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const settings = await supabaseAdmin
       .from("shop_settings")
       .select(
-        "name, tagline, logo_url, primary_color, secondary_color, whatsapp, address, working_hours, slot_step, setup_done",
+        "id, slug, name, tagline, logo_url, primary_color, secondary_color, whatsapp, address, working_hours, slot_step, setup_done",
       )
-      .limit(1)
-      .maybeSingle(),
-    supabaseAdmin
-      .from("barbers")
-      .select("id, name, photo_url, specialty")
-      .eq("active", true)
-      .order("sort_order"),
-    supabaseAdmin
-      .from("services")
-      .select("id, name, description, duration_min, price_cents")
-      .eq("active", true)
-      .order("sort_order"),
-  ]);
+      .eq("slug", data.slug)
+      .maybeSingle();
 
-  if (settings.error) throw new Error(settings.error.message);
+    if (settings.error) throw new Error(settings.error.message);
+    if (!settings.data) return null;
 
-  return {
-    shop: (settings.data ?? {
-      name: "Barbearia",
-      tagline: "",
-      logo_url: null,
-      primary_color: "#e0a325",
-      secondary_color: "#171412",
-      whatsapp: "",
-      address: "",
-      working_hours: {},
-      slot_step: 15,
-      setup_done: false,
-    }) as unknown as Shop,
-    barbers: (barbers.data ?? []) as Barber[],
-    services: (services.data ?? []) as Service[],
-  };
-});
+    const shopId = settings.data.id;
+    const [barbers, services] = await Promise.all([
+      supabaseAdmin
+        .from("barbers")
+        .select("id, name, photo_url, specialty")
+        .eq("shop_id", shopId)
+        .eq("active", true)
+        .order("sort_order"),
+      supabaseAdmin
+        .from("services")
+        .select("id, name, description, duration_min, price_cents")
+        .eq("shop_id", shopId)
+        .eq("active", true)
+        .order("sort_order"),
+    ]);
 
-export const getAvailability = createServerFn({ method: "GET" })
+    return {
+      shop: settings.data as unknown as Shop,
+      barbers: (barbers.data ?? []) as Barber[],
+      services: (services.data ?? []) as Service[],
+    };
+  });
+
+export const getAvailability = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
+        slug: slugInput,
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         serviceId: z.string().uuid(),
         barberId: z.string().uuid().nullable().optional(),
@@ -81,19 +80,41 @@ export const getAvailability = createServerFn({ method: "GET" })
   .handler(async ({ data }): Promise<Slot[]> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [settings, service, barbers, appointments, blocks] = await Promise.all([
-      supabaseAdmin.from("shop_settings").select("working_hours, slot_step").limit(1).maybeSingle(),
-      supabaseAdmin.from("services").select("duration_min").eq("id", data.serviceId).maybeSingle(),
-      supabaseAdmin.from("barbers").select("id").eq("active", true).order("sort_order"),
+    const settings = await supabaseAdmin
+      .from("shop_settings")
+      .select("id, working_hours, slot_step")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (!settings.data) return [];
+    const shopId = settings.data.id;
+
+    const [service, barbers, appointments, blocks] = await Promise.all([
+      supabaseAdmin
+        .from("services")
+        .select("duration_min")
+        .eq("id", data.serviceId)
+        .eq("shop_id", shopId)
+        .maybeSingle(),
+      supabaseAdmin
+        .from("barbers")
+        .select("id")
+        .eq("shop_id", shopId)
+        .eq("active", true)
+        .order("sort_order"),
       supabaseAdmin
         .from("appointments")
         .select("barber_id, start_time, duration_min")
+        .eq("shop_id", shopId)
         .eq("date", data.date)
         .neq("status", "cancelado"),
-      supabaseAdmin.from("blocks").select("barber_id, start_time, end_time").eq("date", data.date),
+      supabaseAdmin
+        .from("blocks")
+        .select("barber_id, start_time, end_time")
+        .eq("shop_id", shopId)
+        .eq("date", data.date),
     ]);
 
-    if (!settings.data || !service.data) return [];
+    if (!service.data) return [];
 
     const now = nowInShopTZ();
     const allowed = (barbers.data ?? []).map((b) => b.id);
@@ -115,6 +136,7 @@ export const createAppointment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
+        slug: slugInput,
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         time: z.string().regex(/^\d{2}:\d{2}$/),
         serviceId: z.string().uuid(),
@@ -128,23 +150,41 @@ export const createAppointment = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ id: string; barberName: string }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const [settings, service, barbers, appointments, blocks] = await Promise.all([
-      supabaseAdmin.from("shop_settings").select("working_hours, slot_step").limit(1).maybeSingle(),
+    const settings = await supabaseAdmin
+      .from("shop_settings")
+      .select("id, working_hours, slot_step")
+      .eq("slug", data.slug)
+      .maybeSingle();
+    if (!settings.data) throw new Error("Barbearia não encontrada.");
+    const shopId = settings.data.id;
+
+    const [service, barbers, appointments, blocks] = await Promise.all([
       supabaseAdmin
         .from("services")
         .select("duration_min, price_cents")
         .eq("id", data.serviceId)
+        .eq("shop_id", shopId)
         .maybeSingle(),
-      supabaseAdmin.from("barbers").select("id, name").eq("active", true).order("sort_order"),
+      supabaseAdmin
+        .from("barbers")
+        .select("id, name")
+        .eq("shop_id", shopId)
+        .eq("active", true)
+        .order("sort_order"),
       supabaseAdmin
         .from("appointments")
         .select("barber_id, start_time, duration_min")
+        .eq("shop_id", shopId)
         .eq("date", data.date)
         .neq("status", "cancelado"),
-      supabaseAdmin.from("blocks").select("barber_id, start_time, end_time").eq("date", data.date),
+      supabaseAdmin
+        .from("blocks")
+        .select("barber_id, start_time, end_time")
+        .eq("shop_id", shopId)
+        .eq("date", data.date),
     ]);
 
-    if (!settings.data || !service.data) throw new Error("Serviço indisponível.");
+    if (!service.data) throw new Error("Serviço indisponível.");
 
     const now = nowInShopTZ();
     const all = barbers.data ?? [];
@@ -172,6 +212,7 @@ export const createAppointment = createServerFn({ method: "POST" })
     const inserted = await supabaseAdmin
       .from("appointments")
       .insert({
+        shop_id: shopId,
         barber_id: chosenId,
         service_id: data.serviceId,
         client_name: data.clientName,
@@ -191,15 +232,19 @@ export const createAppointment = createServerFn({ method: "POST" })
 
 export const getMyAppointments = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
-    z.object({ phone: z.string().trim().min(8).max(24) }).parse(data),
+    z.object({ slug: slugInput, phone: z.string().trim().min(8).max(24) }).parse(data),
   )
   .handler(async ({ data }): Promise<ClientAppointment[]> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resolveShopId } = await import("./admin.server");
+    const shopId = await resolveShopId(data.slug);
+
     const { data: rows, error } = await supabaseAdmin
       .from("appointments")
       .select(
         "id, date, start_time, duration_min, price_cents, status, client_name, barbers(name), services(name)",
       )
+      .eq("shop_id", shopId)
       .eq("client_phone", onlyDigits(data.phone))
       .order("date", { ascending: false })
       .order("start_time", { ascending: false })
@@ -236,15 +281,22 @@ export const getMyAppointments = createServerFn({ method: "POST" })
 export const cancelMyAppointment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
-      .object({ id: z.string().uuid(), phone: z.string().trim().min(8).max(24) })
+      .object({
+        slug: slugInput,
+        id: z.string().uuid(),
+        phone: z.string().trim().min(8).max(24),
+      })
       .parse(data),
   )
   .handler(async ({ data }): Promise<{ ok: true }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { resolveShopId } = await import("./admin.server");
+    const shopId = await resolveShopId(data.slug);
     const { error } = await supabaseAdmin
       .from("appointments")
       .update({ status: "cancelado" })
       .eq("id", data.id)
+      .eq("shop_id", shopId)
       .eq("client_phone", onlyDigits(data.phone));
     if (error) throw new Error(error.message);
     return { ok: true };
