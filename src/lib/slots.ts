@@ -19,6 +19,7 @@ export type Service = {
 };
 
 export type Shop = {
+  slug: string;
   name: string;
   tagline: string;
   logo_url: string | null;

@@ -103,7 +103,7 @@ export const createShop = createServerFn({ method: "POST" })
         slug: data.slug,
         name: data.name,
         admin_pin: data.adminPin,
-        working_hours: DEFAULT_HOURS as unknown as Record<string, unknown>,
+        working_hours: DEFAULT_HOURS as never,
         setup_done: false,
       })
       .select("id")
