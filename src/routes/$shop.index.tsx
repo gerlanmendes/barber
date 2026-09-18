@@ -112,8 +112,8 @@ function BookingPage() {
         priceCents: service?.price_cents ?? 0,
       });
       if (typeof window !== "undefined") {
-        localStorage.setItem("cliente_telefone", onlyDigits(vars.clientPhone));
-        localStorage.setItem("cliente_nome", vars.clientName);
+        localStorage.setItem(`cliente_telefone_${slug}`, onlyDigits(vars.clientPhone));
+        localStorage.setItem(`cliente_nome_${slug}`, vars.clientName);
       }
     },
     onError: (error: Error) => {
