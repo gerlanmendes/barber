@@ -17,7 +17,7 @@ import {
 
 const shopQuery = queryOptions({ queryKey: ["shop"], queryFn: () => getShopData() });
 
-export const Route = createFileRoute("/meus-agendamentos")({
+export const Route = createFileRoute("/$shop/meus-agendamentos")({
   head: () => ({
     meta: [
       { title: "Meus agendamentos | Barbearia Navalha" },

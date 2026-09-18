@@ -21,7 +21,7 @@ import {
 
 const shopQuery = queryOptions({ queryKey: ["shop"], queryFn: () => getShopData() });
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/$shop/")({
   head: () => ({
     meta: [
       { title: "Agende seu corte online | Barbearia" },

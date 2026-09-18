@@ -10,63 +10,89 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AdminRouteImport } from './routes/admin'
-import { Route as InstalarRouteImport } from './routes/instalar'
-import { Route as MeusAgendamentosRouteImport } from './routes/meus-agendamentos'
+import { Route as ShopIndexRouteImport } from './routes/$shop.index'
+import { Route as ShopAdminRouteImport } from './routes/$shop.admin'
+import { Route as ShopInstalarRouteImport } from './routes/$shop.instalar'
+import { Route as ShopMeusAgendamentosRouteImport } from './routes/$shop.meus-agendamentos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const ShopIndexRoute = ShopIndexRouteImport.update({
+  id: '/$shop/',
+  path: '/$shop/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InstalarRoute = InstalarRouteImport.update({
-  id: '/instalar',
-  path: '/instalar',
+const ShopAdminRoute = ShopAdminRouteImport.update({
+  id: '/$shop/admin',
+  path: '/$shop/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MeusAgendamentosRoute = MeusAgendamentosRouteImport.update({
-  id: '/meus-agendamentos',
-  path: '/meus-agendamentos',
+const ShopInstalarRoute = ShopInstalarRouteImport.update({
+  id: '/$shop/instalar',
+  path: '/$shop/instalar',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShopMeusAgendamentosRoute = ShopMeusAgendamentosRouteImport.update({
+  id: '/$shop/meus-agendamentos',
+  path: '/$shop/meus-agendamentos',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/instalar': typeof InstalarRoute
-  '/meus-agendamentos': typeof MeusAgendamentosRoute
+  '/$shop/admin': typeof ShopAdminRoute
+  '/$shop/instalar': typeof ShopInstalarRoute
+  '/$shop/meus-agendamentos': typeof ShopMeusAgendamentosRoute
+  '/$shop/': typeof ShopIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/instalar': typeof InstalarRoute
-  '/meus-agendamentos': typeof MeusAgendamentosRoute
+  '/$shop/admin': typeof ShopAdminRoute
+  '/$shop/instalar': typeof ShopInstalarRoute
+  '/$shop/meus-agendamentos': typeof ShopMeusAgendamentosRoute
+  '/$shop': typeof ShopIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/admin': typeof AdminRoute
-  '/instalar': typeof InstalarRoute
-  '/meus-agendamentos': typeof MeusAgendamentosRoute
+  '/$shop/admin': typeof ShopAdminRoute
+  '/$shop/instalar': typeof ShopInstalarRoute
+  '/$shop/meus-agendamentos': typeof ShopMeusAgendamentosRoute
+  '/$shop/': typeof ShopIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/instalar' | '/meus-agendamentos'
+  fullPaths:
+    | '/'
+    | '/$shop/admin'
+    | '/$shop/instalar'
+    | '/$shop/meus-agendamentos'
+    | '/$shop/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/instalar' | '/meus-agendamentos'
-  id: '__root__' | '/' | '/admin' | '/instalar' | '/meus-agendamentos'
+  to:
+    | '/'
+    | '/$shop/admin'
+    | '/$shop/instalar'
+    | '/$shop/meus-agendamentos'
+    | '/$shop'
+  id:
+    | '__root__'
+    | '/'
+    | '/$shop/admin'
+    | '/$shop/instalar'
+    | '/$shop/meus-agendamentos'
+    | '/$shop/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AdminRoute: typeof AdminRoute
-  InstalarRoute: typeof InstalarRoute
-  MeusAgendamentosRoute: typeof MeusAgendamentosRoute
+  ShopAdminRoute: typeof ShopAdminRoute
+  ShopInstalarRoute: typeof ShopInstalarRoute
+  ShopMeusAgendamentosRoute: typeof ShopMeusAgendamentosRoute
+  ShopIndexRoute: typeof ShopIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -78,25 +104,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
+    '/$shop/': {
+      id: '/$shop/'
+      path: '/$shop'
+      fullPath: '/$shop/'
+      preLoaderRoute: typeof ShopIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/instalar': {
-      id: '/instalar'
-      path: '/instalar'
-      fullPath: '/instalar'
-      preLoaderRoute: typeof InstalarRouteImport
+    '/$shop/admin': {
+      id: '/$shop/admin'
+      path: '/$shop/admin'
+      fullPath: '/$shop/admin'
+      preLoaderRoute: typeof ShopAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/meus-agendamentos': {
-      id: '/meus-agendamentos'
-      path: '/meus-agendamentos'
-      fullPath: '/meus-agendamentos'
-      preLoaderRoute: typeof MeusAgendamentosRouteImport
+    '/$shop/instalar': {
+      id: '/$shop/instalar'
+      path: '/$shop/instalar'
+      fullPath: '/$shop/instalar'
+      preLoaderRoute: typeof ShopInstalarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$shop/meus-agendamentos': {
+      id: '/$shop/meus-agendamentos'
+      path: '/$shop/meus-agendamentos'
+      fullPath: '/$shop/meus-agendamentos'
+      preLoaderRoute: typeof ShopMeusAgendamentosRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -104,9 +137,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AdminRoute: AdminRoute,
-  InstalarRoute: InstalarRoute,
-  MeusAgendamentosRoute: MeusAgendamentosRoute,
+  ShopAdminRoute: ShopAdminRoute,
+  ShopInstalarRoute: ShopInstalarRoute,
+  ShopMeusAgendamentosRoute: ShopMeusAgendamentosRoute,
+  ShopIndexRoute: ShopIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

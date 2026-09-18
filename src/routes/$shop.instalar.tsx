@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export const Route = createFileRoute("/instalar")({
+export const Route = createFileRoute("/$shop/instalar")({
   head: () => ({
     meta: [
       { title: "Configurar a barbearia | Instalação em 2 minutos" },

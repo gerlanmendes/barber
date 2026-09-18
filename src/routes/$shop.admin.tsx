@@ -21,7 +21,7 @@ import {
 } from "@/lib/admin.functions";
 import { formatDateISO, formatFriendlyDate, formatPhoneBR, formatPrice } from "@/lib/slots";
 
-export const Route = createFileRoute("/admin")({
+export const Route = createFileRoute("/$shop/admin")({
   head: () => ({
     meta: [
       { title: "Painel do barbeiro | Agenda do dia" },
