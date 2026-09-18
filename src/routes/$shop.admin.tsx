@@ -156,7 +156,15 @@ function AgendaTab({ pin }: { pin: string }) {
   const block = useMutation({
     mutationFn: () =>
       blockFn({
-        data: { pin, barberId: null, date, start: blockStart, end: blockEnd, reason: blockReason },
+        data: {
+          slug,
+          pin,
+          barberId: null,
+          date,
+          start: blockStart,
+          end: blockEnd,
+          reason: blockReason,
+        },
       }),
     onSuccess: () => {
       toast.success("Agenda bloqueada.");
