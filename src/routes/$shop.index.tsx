@@ -19,7 +19,8 @@ import {
   whatsappLink,
 } from "@/lib/slots";
 
-const shopQuery = queryOptions({ queryKey: ["shop"], queryFn: () => getShopData() });
+const shopQuery = (slug: string) =>
+  queryOptions({ queryKey: ["shop", slug], queryFn: () => getShopData({ data: { slug } }) });
 
 export const Route = createFileRoute("/$shop/")({
   head: () => ({
@@ -39,8 +40,8 @@ export const Route = createFileRoute("/$shop/")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(shopQuery);
+  loader: ({ context, params }) => {
+    context.queryClient.ensureQueryData(shopQuery(params.shop));
   },
   component: BookingPage,
 });
@@ -64,7 +65,11 @@ type Confirmed = {
 };
 
 function BookingPage() {
-  const { data } = useSuspenseQuery(shopQuery);
+  const { shop: slug } = Route.useParams();
+  const { data } = useSuspenseQuery(shopQuery(slug));
+
+  if (!data) return <NotFoundShop />;
+
   const { shop, barbers, services } = data;
 
   const [step, setStep] = useState(1);
@@ -84,7 +89,7 @@ function BookingPage() {
     queryKey: ["availability", date, serviceId, barberId],
     enabled: step === 3 && !!serviceId,
     queryFn: () =>
-      fetchAvailability({ data: { date, serviceId: serviceId!, barberId: barberId ?? null } }),
+      fetchAvailability({ data: { slug, date, serviceId: serviceId!, barberId: barberId ?? null } }),
   });
 
   const book = useServerFn(createAppointment);
@@ -96,7 +101,7 @@ function BookingPage() {
       barberId: string | null;
       clientName: string;
       clientPhone: string;
-    }) => book({ data: input }),
+    }) => book({ data: { slug, ...input } }),
     onSuccess: (result, vars) => {
       setConfirmed({
         barberName: result.barberName,
@@ -162,7 +167,7 @@ function BookingPage() {
                 <MessageCircle className="h-5 w-5" /> Falar no WhatsApp
               </a>
             )}
-            <Link to="/meus-agendamentos" className="btn-base btn-ghost h-12 px-4">
+            <Link to="/$shop/meus-agendamentos" params={{ shop: slug }} className="btn-base btn-ghost h-12 px-4">
               Ver meus agendamentos
             </Link>
           </div>
@@ -177,7 +182,7 @@ function BookingPage() {
       <main className="mx-auto w-full max-w-lg px-5 pb-28 pt-8">
         {shop.setup_done === false && (
           <a
-            href="/instalar"
+            href={`/${slug}/instalar`}
             className="mb-5 block rounded-xl border border-primary/40 bg-primary/10 p-4 text-sm"
           >
             <strong>Esta barbearia ainda não foi configurada.</strong>
@@ -191,7 +196,7 @@ function BookingPage() {
             <h1 className="truncate text-3xl leading-none">{shop.name}</h1>
             <p className="truncate text-sm text-muted-foreground">{shop.tagline}</p>
           </div>
-          <Link to="/meus-agendamentos" className="btn-base btn-ghost h-10 px-3 text-sm">
+          <Link to="/$shop/meus-agendamentos" params={{ shop: slug }} className="btn-base btn-ghost h-10 px-3 text-sm">
             Meus horários
           </Link>
         </header>
@@ -412,7 +417,7 @@ function BookingPage() {
 
         <footer className="mt-12 text-center text-xs text-muted-foreground">
           <p>{shop.address}</p>
-          <Link to="/admin" className="mt-2 inline-block underline">
+          <Link to="/$shop/admin" params={{ shop: slug }} className="mt-2 inline-block underline">
             Painel do barbeiro
           </Link>
         </footer>
@@ -427,5 +432,19 @@ function Row({ label, value }: { label: string; value: string }) {
       <span className="text-sm text-muted-foreground">{label}</span>
       <span className="text-right text-sm font-medium">{value}</span>
     </div>
+  );
+}
+
+function NotFoundShop() {
+  return (
+    <main className="mx-auto flex min-h-screen w-full max-w-lg flex-col items-center justify-center px-5 text-center">
+      <h1 className="text-3xl">Barbearia não encontrada</h1>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Confira o endereço ou volte para a lista de barbearias.
+      </p>
+      <Link to="/" className="btn-base btn-primary mt-6 h-12 px-5">
+        Ver barbearias
+      </Link>
+    </main>
   );
 }
