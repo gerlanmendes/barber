@@ -43,20 +43,21 @@ export const Route = createFileRoute("/$shop/admin")({
 const WEEK = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 function AdminPage() {
+  const { shop: slug } = Route.useParams();
   const [pin, setPin] = useState<string | null>(null);
   const [pinInput, setPinInput] = useState("");
   const [tab, setTab] = useState<"agenda" | "clientes" | "ajustes">("agenda");
 
   useEffect(() => {
-    const stored = localStorage.getItem("admin_pin");
+    const stored = localStorage.getItem(`admin_pin_${slug}`);
     if (stored) setPin(stored);
   }, []);
 
   const login = useServerFn(adminLogin);
   const loginMutation = useMutation({
-    mutationFn: (value: string) => login({ data: { pin: value } }),
+    mutationFn: (value: string) => login({ data: { slug, pin: value } }),
     onSuccess: (_r, value) => {
-      localStorage.setItem("admin_pin", value);
+      localStorage.setItem(`admin_pin_${slug}`, value);
       setPin(value);
     },
     onError: () => toast.error("PIN inválido."),
@@ -85,7 +86,7 @@ function AdminPage() {
           <button className="btn-base btn-primary h-12" disabled={loginMutation.isPending}>
             Entrar
           </button>
-          <Link to="/" className="btn-base h-10 text-sm text-muted-foreground">
+          <Link to="/$shop/" params={{ shop: slug }} className="btn-base h-10 text-sm text-muted-foreground">
             <ChevronLeft className="h-4 w-4" /> Voltar ao site
           </Link>
         </form>
@@ -101,7 +102,7 @@ function AdminPage() {
           type="button"
           className="btn-base btn-ghost h-9 px-3 text-sm"
           onClick={() => {
-            localStorage.removeItem("admin_pin");
+            localStorage.removeItem(`admin_pin_${slug}`);
             setPin(null);
           }}
         >
@@ -132,6 +133,7 @@ function AdminPage() {
 }
 
 function AgendaTab({ pin }: { pin: string }) {
+  const { shop: slug } = Route.useParams();
   const [date, setDate] = useState(() => formatDateISO(new Date()));
   const [blockStart, setBlockStart] = useState("12:00");
   const [blockEnd, setBlockEnd] = useState("13:00");
@@ -139,14 +141,14 @@ function AgendaTab({ pin }: { pin: string }) {
 
   const fetchAgenda = useServerFn(getAgenda);
   const agenda = useQuery({
-    queryKey: ["agenda", date, pin],
-    queryFn: () => fetchAgenda({ data: { pin, date } }),
+    queryKey: ["agenda", slug, date, pin],
+    queryFn: () => fetchAgenda({ data: { slug, pin, date } }),
   });
 
   const statusFn = useServerFn(setAppointmentStatus);
   const status = useMutation({
     mutationFn: (input: { id: string; status: "confirmado" | "concluido" | "cancelado" }) =>
-      statusFn({ data: { pin, ...input } }),
+      statusFn({ data: { slug, pin, ...input } }),
     onSuccess: () => agenda.refetch(),
   });
 
@@ -164,7 +166,7 @@ function AgendaTab({ pin }: { pin: string }) {
 
   const removeFn = useServerFn(deleteBlock);
   const remove = useMutation({
-    mutationFn: (id: string) => removeFn({ data: { pin, id } }),
+    mutationFn: (id: string) => removeFn({ data: { slug, pin, id } }),
     onSuccess: () => agenda.refetch(),
   });
 
@@ -285,10 +287,11 @@ function AgendaTab({ pin }: { pin: string }) {
 }
 
 function ClientsTab({ pin }: { pin: string }) {
+  const { shop: slug } = Route.useParams();
   const fetchClients = useServerFn(getClients);
   const clients = useQuery({
-    queryKey: ["clients", pin],
-    queryFn: () => fetchClients({ data: { pin } }),
+    queryKey: ["clients", slug, pin],
+    queryFn: () => fetchClients({ data: { slug, pin } }),
   });
 
   return (
@@ -324,10 +327,11 @@ type ShopForm = {
 };
 
 function SettingsTab({ pin }: { pin: string }) {
+  const { shop: slug } = Route.useParams();
   const fetchCatalog = useServerFn(getCatalog);
   const catalog = useQuery({
-    queryKey: ["catalog", pin],
-    queryFn: () => fetchCatalog({ data: { pin } }),
+    queryKey: ["catalog", slug, pin],
+    queryFn: () => fetchCatalog({ data: { slug, pin } }),
   });
 
   const [form, setForm] = useState<ShopForm | null>(null);
@@ -349,7 +353,7 @@ function SettingsTab({ pin }: { pin: string }) {
 
   const saveFn = useServerFn(updateShop);
   const save = useMutation({
-    mutationFn: (values: ShopForm) => saveFn({ data: { pin, ...values } }),
+    mutationFn: (values: ShopForm) => saveFn({ data: { slug, pin, ...values } }),
     onSuccess: async (_res, values) => {
       // Aplica as cores imediatamente, sem precisar recarregar a página.
       if (typeof document !== "undefined") {
@@ -474,14 +478,15 @@ function SettingsTab({ pin }: { pin: string }) {
 }
 
 function ResetSection({ pin }: { pin: string }) {
+  const { shop: slug } = Route.useParams();
   const [confirm, setConfirm] = useState("");
   const resetFn = useServerFn(resetShop);
 
   const reset = useMutation({
-    mutationFn: () => resetFn({ data: { pin, confirm: "ZERAR", keepAppointments: false } }),
+    mutationFn: () => resetFn({ data: { slug, pin, confirm: "ZERAR", keepAppointments: false } }),
     onSuccess: () => {
       toast.success("Sistema zerado. Abrindo o assistente de configuração...");
-      if (typeof window !== "undefined") window.location.href = "/instalar";
+      if (typeof window !== "undefined") window.location.href = `/${slug}/instalar`;
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -529,6 +534,7 @@ function ServicesEditor({
   services: ServiceRow[];
   onSaved: () => void;
 }) {
+  const { shop: slug } = Route.useParams();
   const saveFn = useServerFn(saveService);
   const [draft, setDraft] = useState<Record<string, ServiceRow>>({});
   const [novo, setNovo] = useState(false);
@@ -537,6 +543,7 @@ function ServicesEditor({
     mutationFn: (row: Omit<ServiceRow, "id"> & { id: string | null }) =>
       saveFn({
         data: {
+          slug,
           pin,
           id: row.id,
           name: row.name,
@@ -688,6 +695,7 @@ function BarbersEditor({
   barbers: BarberRow[];
   onSaved: () => void;
 }) {
+  const { shop: slug } = Route.useParams();
   const saveFn = useServerFn(saveBarber);
   const [draft, setDraft] = useState<Record<string, BarberRow>>({});
   const [novo, setNovo] = useState<BarberRow | null>(null);
@@ -696,6 +704,7 @@ function BarbersEditor({
     mutationFn: (row: Omit<BarberRow, "id"> & { id: string | null }) =>
       saveFn({
         data: {
+          slug,
           pin,
           id: row.id,
           name: row.name,
