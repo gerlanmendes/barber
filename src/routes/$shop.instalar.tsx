@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export const Route = createFileRoute("/instalar")({
+export const Route = createFileRoute("/$shop/instalar")({
   head: () => ({
     meta: [
       { title: "Configurar a barbearia | Instalação em 2 minutos" },
@@ -44,8 +44,12 @@ const DAYS = [
 type DayKey = (typeof DAYS)[number]["key"];
 
 function SetupPage() {
+  const { shop: slug } = Route.useParams();
   const router = useRouter();
-  const state = useQuery({ queryKey: ["setup-state"], queryFn: () => getSetupState() });
+  const state = useQuery({
+    queryKey: ["setup-state", slug],
+    queryFn: () => getSetupState({ data: { slug } }),
+  });
 
   const [name, setName] = useState("");
   const [tagline, setTagline] = useState("Estilo e precisão");
@@ -68,6 +72,7 @@ function SetupPage() {
     mutationFn: () =>
       save({
         data: {
+          slug,
           name: name.trim(),
           tagline: tagline.trim(),
           whatsapp: whatsapp.trim(),
@@ -112,10 +117,10 @@ function SetupPage() {
         </p>
         <div className="mt-6 flex gap-3">
           <Button asChild>
-            <a href="/admin">Abrir o painel</a>
+            <a href={`/${slug}/admin`}>Abrir o painel</a>
           </Button>
           <Button variant="outline" asChild>
-            <a href="/">Ver o site</a>
+            <a href={`/${slug}`}>Ver o site</a>
           </Button>
         </div>
       </Shell>
@@ -133,10 +138,10 @@ function SetupPage() {
         </p>
         <div className="mt-6 flex gap-3">
           <Button asChild>
-            <a href="/admin">Abrir o painel</a>
+            <a href={`/${slug}/admin`}>Abrir o painel</a>
           </Button>
           <Button variant="outline" asChild>
-            <a href="/">Ver o site do cliente</a>
+            <a href={`/${slug}`}>Ver o site do cliente</a>
           </Button>
         </div>
       </Shell>

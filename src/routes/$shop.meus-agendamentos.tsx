@@ -15,9 +15,10 @@ import {
   onlyDigits,
 } from "@/lib/slots";
 
-const shopQuery = queryOptions({ queryKey: ["shop"], queryFn: () => getShopData() });
+const shopQuery = (slug: string) =>
+  queryOptions({ queryKey: ["shop", slug], queryFn: () => getShopData({ data: { slug } }) });
 
-export const Route = createFileRoute("/meus-agendamentos")({
+export const Route = createFileRoute("/$shop/meus-agendamentos")({
   head: () => ({
     meta: [
       { title: "Meus agendamentos | Barbearia Navalha" },
@@ -33,21 +34,22 @@ export const Route = createFileRoute("/meus-agendamentos")({
       },
     ],
   }),
-  loader: ({ context }) => {
-    context.queryClient.ensureQueryData(shopQuery);
+  loader: ({ context, params }) => {
+    context.queryClient.ensureQueryData(shopQuery(params.shop));
   },
   component: MyAppointments,
 });
 
 function MyAppointments() {
-  const { data } = useSuspenseQuery(shopQuery);
-  const { shop } = data;
+  const { shop: slug } = Route.useParams();
+  const { data } = useSuspenseQuery(shopQuery(slug));
+  const shop = data?.shop;
 
   const [phone, setPhone] = useState("");
   const [search, setSearch] = useState<string | null>(null);
 
   useEffect(() => {
-    const stored = localStorage.getItem("cliente_telefone");
+    const stored = localStorage.getItem(`cliente_telefone_${slug}`);
     if (stored) {
       setPhone(formatPhoneBR(stored));
       setSearch(stored);
@@ -58,12 +60,12 @@ function MyAppointments() {
   const list = useQuery({
     queryKey: ["my-appointments", search],
     enabled: !!search,
-    queryFn: () => fetchMine({ data: { phone: search! } }),
+    queryFn: () => fetchMine({ data: { slug, phone: search! } }),
   });
 
   const cancelFn = useServerFn(cancelMyAppointment);
   const cancel = useMutation({
-    mutationFn: (id: string) => cancelFn({ data: { id, phone: search! } }),
+    mutationFn: (id: string) => cancelFn({ data: { slug, id, phone: search! } }),
     onSuccess: () => {
       toast.success("Agendamento cancelado.");
       list.refetch();
@@ -71,11 +73,19 @@ function MyAppointments() {
     onError: () => toast.error("Não foi possível cancelar."),
   });
 
+  if (!shop) {
+    return (
+      <main className="mx-auto flex min-h-screen w-full max-w-lg items-center justify-center px-5 text-center">
+        <p>Barbearia não encontrada.</p>
+      </main>
+    );
+  }
+
   return (
     <>
       <ShopTheme shop={shop} />
       <main className="mx-auto w-full max-w-lg px-5 pb-20 pt-8">
-        <Link to="/" className="btn-base h-9 px-2 text-sm text-muted-foreground">
+        <Link to="/$shop" params={{ shop: slug }} className="btn-base h-9 px-2 text-sm text-muted-foreground">
           <ChevronLeft className="h-4 w-4" /> Voltar
         </Link>
         <h1 className="mt-3 text-4xl">Meus agendamentos</h1>
@@ -92,7 +102,7 @@ function MyAppointments() {
               toast.error("Informe o WhatsApp com DDD.");
               return;
             }
-            localStorage.setItem("cliente_telefone", digits);
+            localStorage.setItem(`cliente_telefone_${slug}`, digits);
             setSearch(digits);
           }}
         >
@@ -153,7 +163,7 @@ function MyAppointments() {
                   >
                     Google Agenda
                   </a>
-                  <Link to="/" className="btn-base btn-ghost h-10 px-3 text-sm">
+                  <Link to="/$shop" params={{ shop: slug }} className="btn-base btn-ghost h-10 px-3 text-sm">
                     Reagendar
                   </Link>
                   <button
