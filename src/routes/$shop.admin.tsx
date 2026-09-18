@@ -86,7 +86,7 @@ function AdminPage() {
           <button className="btn-base btn-primary h-12" disabled={loginMutation.isPending}>
             Entrar
           </button>
-          <Link to="/$shop/" params={{ shop: slug }} className="btn-base h-10 text-sm text-muted-foreground">
+          <Link to="/$shop" params={{ shop: slug }} className="btn-base h-10 text-sm text-muted-foreground">
             <ChevronLeft className="h-4 w-4" /> Voltar ao site
           </Link>
         </form>

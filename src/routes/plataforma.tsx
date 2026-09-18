@@ -233,7 +233,7 @@ function OwnerPanel({ pin, onLogout }: { pin: string; onLogout: () => void }) {
             </div>
             <div className="flex flex-wrap gap-2">
               <Link
-                to="/$shop/"
+                to="/$shop"
                 params={{ shop: s.slug }}
                 className="btn-base btn-ghost h-10 px-3 text-sm"
               >

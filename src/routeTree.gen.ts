@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PlataformaRouteImport } from './routes/plataforma'
 import { Route as ShopIndexRouteImport } from './routes/$shop.index'
 import { Route as ShopAdminRouteImport } from './routes/$shop.admin'
 import { Route as ShopInstalarRouteImport } from './routes/$shop.instalar'
@@ -18,6 +19,11 @@ import { Route as ShopMeusAgendamentosRouteImport } from './routes/$shop.meus-ag
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PlataformaRoute = PlataformaRouteImport.update({
+  id: '/plataforma',
+  path: '/plataforma',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShopIndexRoute = ShopIndexRouteImport.update({
@@ -43,6 +49,7 @@ const ShopMeusAgendamentosRoute = ShopMeusAgendamentosRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/plataforma': typeof PlataformaRoute
   '/$shop/admin': typeof ShopAdminRoute
   '/$shop/instalar': typeof ShopInstalarRoute
   '/$shop/meus-agendamentos': typeof ShopMeusAgendamentosRoute
@@ -50,6 +57,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/plataforma': typeof PlataformaRoute
   '/$shop/admin': typeof ShopAdminRoute
   '/$shop/instalar': typeof ShopInstalarRoute
   '/$shop/meus-agendamentos': typeof ShopMeusAgendamentosRoute
@@ -58,6 +66,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/plataforma': typeof PlataformaRoute
   '/$shop/admin': typeof ShopAdminRoute
   '/$shop/instalar': typeof ShopInstalarRoute
   '/$shop/meus-agendamentos': typeof ShopMeusAgendamentosRoute
@@ -67,6 +76,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/plataforma'
     | '/$shop/admin'
     | '/$shop/instalar'
     | '/$shop/meus-agendamentos'
@@ -74,6 +84,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/plataforma'
     | '/$shop/admin'
     | '/$shop/instalar'
     | '/$shop/meus-agendamentos'
@@ -81,6 +92,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/plataforma'
     | '/$shop/admin'
     | '/$shop/instalar'
     | '/$shop/meus-agendamentos'
@@ -89,6 +101,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PlataformaRoute: typeof PlataformaRoute
   ShopAdminRoute: typeof ShopAdminRoute
   ShopInstalarRoute: typeof ShopInstalarRoute
   ShopMeusAgendamentosRoute: typeof ShopMeusAgendamentosRoute
@@ -102,6 +115,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/plataforma': {
+      id: '/plataforma'
+      path: '/plataforma'
+      fullPath: '/plataforma'
+      preLoaderRoute: typeof PlataformaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$shop/': {
@@ -137,6 +157,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PlataformaRoute: PlataformaRoute,
   ShopAdminRoute: ShopAdminRoute,
   ShopInstalarRoute: ShopInstalarRoute,
   ShopMeusAgendamentosRoute: ShopMeusAgendamentosRoute,

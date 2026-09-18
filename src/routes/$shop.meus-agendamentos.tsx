@@ -85,7 +85,7 @@ function MyAppointments() {
     <>
       <ShopTheme shop={shop} />
       <main className="mx-auto w-full max-w-lg px-5 pb-20 pt-8">
-        <Link to="/$shop/" params={{ shop: slug }} className="btn-base h-9 px-2 text-sm text-muted-foreground">
+        <Link to="/$shop" params={{ shop: slug }} className="btn-base h-9 px-2 text-sm text-muted-foreground">
           <ChevronLeft className="h-4 w-4" /> Voltar
         </Link>
         <h1 className="mt-3 text-4xl">Meus agendamentos</h1>
@@ -163,7 +163,7 @@ function MyAppointments() {
                   >
                     Google Agenda
                   </a>
-                  <Link to="/$shop/" params={{ shop: slug }} className="btn-base btn-ghost h-10 px-3 text-sm">
+                  <Link to="/$shop" params={{ shop: slug }} className="btn-base btn-ghost h-10 px-3 text-sm">
                     Reagendar
                   </Link>
                   <button

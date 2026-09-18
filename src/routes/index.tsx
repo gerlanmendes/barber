@@ -57,7 +57,7 @@ function PlatformHome() {
         {shops.map((shop) => (
           <Link
             key={shop.slug}
-            to="/$shop/"
+            to="/$shop"
             params={{ shop: shop.slug }}
             className="choice-card flex items-center gap-3"
           >
